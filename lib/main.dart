@@ -24,7 +24,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-  final int _numberOfBirds = 5; // Number of birds to animate
+  final int _numberOfBirds = 8;
   final List<AnimationController> _controllers = [];
   final List<Animation<double>> _verticalAnimations = [];
   final List<Animation<double>> _horizontalAnimations = [];
@@ -33,12 +33,14 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   void initState() {
     super.initState();
 
-    // Initialize animation controllers and animations for each bird
+    // Initialize animation controllers and animations
     for (int i = 0; i < _numberOfBirds; i++) {
       final controller = AnimationController(
-        duration: const Duration(seconds: 3), // Duration for flying out and back
-        vsync: this, // Using TickerProviderStateMixin
-      );
+        duration: const Duration(seconds: 3),
+        vsync: this,
+      )..addListener(() {
+          setState(() {});
+        });
 
       final verticalAnimation = Tween<double>(begin: 0, end: -30).animate(
         CurvedAnimation(
@@ -51,63 +53,30 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       _verticalAnimations.add(verticalAnimation);
 
       // Start the flight cycle with a staggered delay
-      Future.delayed(Duration(milliseconds: i * 300), () {
+      Future.delayed(Duration(milliseconds: i * 250), () {
         _startFlight(controller);
       });
     }
 
-    // Simulate a loading time of 5 seconds
-    Timer(Duration(seconds: 5), () {
-      // Navigate to the next screen or perform any other action
+    // Simulate a loading time of 3 seconds before navigating
+    Timer(Duration(seconds: 3), () {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => HomeScreen()),
       );
     });
   }
 
-  void _startFlight(AnimationController controller) {
-    // Start the forward animation
-    controller.forward().then((_) {
-      // Pause before reversing direction
-      Future.delayed(Duration(seconds: 1), () {
-        // Start the reverse animation
-        controller.reverse().then((_) {
-          // Start the cycle again
-          _startFlight(controller);
-        });
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    // Dispose all animation controllers
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    // Using MediaQuery here ensures that context is fully built
     final screenWidth = MediaQuery.of(context).size.width;
 
     // Initialize horizontal animations
     if (_horizontalAnimations.isEmpty) {
       for (int i = 0; i < _numberOfBirds; i++) {
-        final horizontalAnimation = TweenSequence([
-          // Fly from left to right
-          TweenSequenceItem(
-            tween: Tween<double>(begin: -150, end: screenWidth + 150),
-            weight: 1,
-          ),
-          // Fly back from right to left
-          TweenSequenceItem(
-            tween: Tween<double>(begin: screenWidth + 150, end: -150),
-            weight: 1,
-          ),
-        ]).animate(
+        final horizontalAnimation = Tween<double>(
+          begin: -150,
+          end: screenWidth + 150,
+        ).animate(
           CurvedAnimation(
             parent: _controllers[i],
             curve: Curves.easeInOut,
@@ -118,7 +87,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color.fromARGB(255, 116, 203, 10),
       body: Center(
         child: Stack(
           children: List.generate(_numberOfBirds, (index) {
@@ -131,9 +100,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     _verticalAnimations[index].value + index * 20,
                   ),
                   child: Image.asset(
-                    'assets/bird.png', // Replace with your own image
+                    'assets/bird.png',
                     width: 50,
                     height: 50,
+                    color: Colors.white,
                   ),
                 );
               },
@@ -142,6 +112,22 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
         ),
       ),
     );
+  }
+
+  void _startFlight(AnimationController controller) {
+    // Start the forward animation
+    controller.forward().then((_) {
+      // Optionally, add logic for reversing the animation if needed
+    });
+  }
+
+  @override
+  void dispose() {
+    // Dispose all animation controllers
+    for (var controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 }
 
