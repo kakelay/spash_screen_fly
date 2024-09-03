@@ -87,28 +87,62 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     }
 
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 116, 203, 10),
-      body: Center(
-        child: Stack(
-          children: List.generate(_numberOfBirds, (index) {
-            return AnimatedBuilder(
-              animation: _controllers[index],
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(
-                    _horizontalAnimations[index].value,
-                    _verticalAnimations[index].value + index * 20,
-                  ),
-                  child: Image.asset(
-                    'assets/bird.png',
-                    width: 50,
-                    height: 50,
-                    color: Colors.white,
-                  ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.grey.shade800, Colors.grey.shade400],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Center(
+          child: Stack(
+            alignment: Alignment.center, // Align items in the center of the stack
+            children: [
+              // Flying birds
+              ...List.generate(_numberOfBirds, (index) {
+                return AnimatedBuilder(
+                  animation: _controllers[index],
+                  builder: (context, child) {
+                    return Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()
+                        ..translate(
+                          _horizontalAnimations[index].value,
+                          _verticalAnimations[index].value + index * 20,
+                        )
+                        ..rotateZ(index.isEven ? 0.1 : -0.1), // Slight rotation for variety
+                      child: Image.asset(
+                        'assets/bird.png',
+                        width: 50,
+                        height: 50,
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    );
+                  },
                 );
-              },
-            );
-          }),
+              }),
+
+              // Centered text
+              Center(
+                child: Text(
+                  'AMK Fly',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                        blurRadius: 4.0,
+                        color: Colors.grey,
+                        offset: Offset(2.0, 2.0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
