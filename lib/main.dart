@@ -1,5 +1,6 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter/scheduler.dart';
 
 void main() {
   runApp(MyApp());
@@ -9,10 +10,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flying Birds Splash Screen',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
       home: SplashScreen(),
     );
   }
@@ -23,140 +20,158 @@ class SplashScreen extends StatefulWidget {
   _SplashScreenState createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
-  final int _numberOfBirds = 8;
-  final List<AnimationController> _controllers = [];
-  final List<Animation<double>> _verticalAnimations = [];
-  final List<Animation<double>> _horizontalAnimations = [];
+class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Color?> _colorAnimation;
 
   @override
   void initState() {
     super.initState();
 
-    // Initialize animation controllers and animations
-    for (int i = 0; i < _numberOfBirds; i++) {
-      final controller = AnimationController(
-        duration: const Duration(seconds: 3),
-        vsync: this,
-      )..addListener(() {
-          setState(() {});
-        });
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
 
-      final verticalAnimation = Tween<double>(begin: 0, end: -30).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeInOut,
-        ),
-      );
-
-      _controllers.add(controller);
-      _verticalAnimations.add(verticalAnimation);
-
-      // Start the flight cycle with a staggered delay
-      Future.delayed(Duration(milliseconds: i * 250), () {
-        _startFlight(controller);
-      });
-    }
-
-    // Simulate a loading time of 3 seconds before navigating
-    Timer(Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => HomeScreen()),
-      );
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    // Initialize horizontal animations
-    if (_horizontalAnimations.isEmpty) {
-      for (int i = 0; i < _numberOfBirds; i++) {
-        final horizontalAnimation = Tween<double>(
-          begin: -150,
-          end: screenWidth + 150,
-        ).animate(
-          CurvedAnimation(
-            parent: _controllers[i],
-            curve: Curves.easeInOut,
-          ),
-        );
-        _horizontalAnimations.add(horizontalAnimation);
-      }
-    }
-
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue.shade800, Colors.grey.shade400],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Stack(
-            alignment: Alignment.center, // Align items in the center of the stack
-            children: [
-              
-              // Flying birds
-              ...List.generate(_numberOfBirds, (index) {
-                return AnimatedBuilder(
-                  animation: _controllers[index],
-                  builder: (context, child) {
-                    return Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()
-                        ..translate(
-                          _horizontalAnimations[index].value,
-                          _verticalAnimations[index].value + index * 20,
-                        )
-                        ..rotateZ(index.isEven ? 0.1 : -0.1), // Slight rotation for variety
-                      child: Image.asset(
-                        'assets/logo.png',
-                        width: 150,
-                        height: 150,
-                       
-                      ),
-                    );
-                  },
-                );
-              }),
-
-              // Centered text
-              
-            ],
-          ),
-        ),
+    _colorAnimation = ColorTween(
+      begin: Colors.white,
+      end: Colors.grey,
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
       ),
     );
-  }
 
-  void _startFlight(AnimationController controller) {
-    // Start the forward animation
-    controller.forward().then((_) {
-      // Optionally, add logic for reversing the animation if needed
+    SchedulerBinding.instance.addPostFrameCallback((_) {
+      Future.delayed(Duration(seconds: 3), () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      });
     });
   }
 
   @override
   void dispose() {
-    // Dispose all animation controllers
-    for (var controller in _controllers) {
-      controller.dispose();
-    }
+    _animationController.dispose();
     super.dispose();
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return Scaffold(
+          backgroundColor: _colorAnimation.value,
+          body: Center(
+            child: LoadingAnimation(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class LoadingAnimation extends StatefulWidget {
+  @override
+  _LoadingAnimationState createState() => _LoadingAnimationState();
+}
+
+class _LoadingAnimationState extends State<LoadingAnimation> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(100, 100), // Adjust the size as needed
+      painter: CarWheelPainter(dotAnimation: _animationController),
+    );
+  }
+}
+
+class CarWheelPainter extends CustomPainter {
+  final Animation<double> dotAnimation;
+
+  CarWheelPainter({required this.dotAnimation}) : super(repaint: dotAnimation);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 4;
+
+    final double radius = size.width / 2;
+
+    // Draw the wheel outer circle
+    paint
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 6;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
+
+    // Draw wheel spokes
+    paint
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    final int numberOfSpokes = 6;
+    for (int i = 0; i < numberOfSpokes; i++) {
+      double angle = (i / numberOfSpokes) * 2 * pi;
+      double x = (size.width / 2) + radius * cos(angle);
+      double y = (size.height / 2) + radius * sin(angle);
+      canvas.drawLine(Offset(size.width / 2, size.height / 2), Offset(x, y), paint);
+    }
+
+    // Draw wheel hub
+    final Paint hubPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 10, hubPaint);
+
+    // Draw moving circle
+    final Paint circlePaint = Paint()
+      ..color = Colors.white.withOpacity(0.7)
+      ..style = PaintingStyle.fill;
+
+    final double moveRadius = radius - 10; // Distance from center to move circle
+    final double angle = dotAnimation.value * 2 * pi; // Full rotation
+    final double circleX = (size.width / 2) + moveRadius * cos(angle);
+    final double circleY = (size.height / 2) + moveRadius * sin(angle);
+
+    canvas.drawCircle(Offset(circleX, circleY), 8, circlePaint);
+  }
+
+  @override
+  bool shouldRepaint(CarWheelPainter oldDelegate) => true;
 }
 
 class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Home Screen'),
-      ),
+      appBar: AppBar(title: Text('Home Screen')),
       body: Center(
         child: Text('Welcome to the Home Screen!'),
       ),
