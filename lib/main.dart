@@ -90,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.grey.shade800, Colors.grey.shade400],
+            colors: [Colors.blue.shade800, Colors.grey.shade400],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -99,6 +99,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
           child: Stack(
             alignment: Alignment.center, // Align items in the center of the stack
             children: [
+              
               // Flying birds
               ...List.generate(_numberOfBirds, (index) {
                 return AnimatedBuilder(
@@ -113,10 +114,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                         )
                         ..rotateZ(index.isEven ? 0.1 : -0.1), // Slight rotation for variety
                       child: Image.asset(
-                        'assets/bird.png',
-                        width: 50,
-                        height: 50,
-                        color: Colors.white.withOpacity(0.8),
+                        'assets/logo.png',
+                        width: 150,
+                        height: 150,
+                       
                       ),
                     );
                   },
@@ -124,23 +125,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
               }),
 
               // Centered text
-              Center(
-                child: Text(
-                  'AMK Fly',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 4.0,
-                        color: Colors.grey,
-                        offset: Offset(2.0, 2.0),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              
             ],
           ),
         ),
