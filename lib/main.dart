@@ -1,6 +1,4 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 
 void main() {
   runApp(MyApp());
@@ -10,7 +8,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: SplashScreen(),
+      routes: {
+        '/home': (context) => HomePage(),
+      },
     );
   }
 }
@@ -21,159 +23,102 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<Color?> _colorAnimation;
+  late AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
+    _controller = AnimationController(
+      duration: const Duration(seconds: 6),
       vsync: this,
     )..repeat();
 
-    _colorAnimation = ColorTween(
-      begin: Colors.white,
-      end: Colors.grey,
-    ).animate(
-      CurvedAnimation(
-        parent: _animationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _navigateToHome();
+  }
 
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(Duration(seconds: 3), () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
-      });
-    });
+  void _navigateToHome() async {
+    await Future.delayed(Duration(seconds: 8));
+    Navigator.of(context).pushReplacementNamed('/home');
   }
 
   @override
   void dispose() {
-    _animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildFace(ImageProvider? image, Color? color, double x, double y, double z) {
+    return Transform(
+      transform: Matrix4.identity()
+        ..translate(50.0 * x, 50.0 * y, 50.0 * z)
+        ..rotateX(0.6)
+        ..rotateY(0.6),
+      child: Container(
+        width: 100,
+        height: 100,
+        decoration: BoxDecoration(
+          color: color,
+          image: image != null
+              ? DecorationImage(
+                  image: image,
+                  fit: BoxFit.cover,
+                )
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: color?.withOpacity(0.6) ?? Colors.black.withOpacity(0.6),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCube() {
     return AnimatedBuilder(
-      animation: _animationController,
+      animation: _controller,
       builder: (context, child) {
-        return Scaffold(
-          backgroundColor: _colorAnimation.value,
-          body: Center(
-            child: LoadingAnimation(),
+        return Transform(
+          transform: Matrix4.identity()
+            ..rotateX(_controller.value * 2.0 * 3.1415927)
+            ..rotateY(_controller.value * 2.0 * 3.1415927),
+          child: Stack(
+            children: [
+              _buildFace(NetworkImage('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0HMFJz_CP5-8fRcNGjy9bX-SOe5hxg0r-KA&s'), null, -1, 0, 0), // Front face with image
+              _buildFace(null, Colors.green, 1, 0, 0), // Back face with color
+              _buildFace(NetworkImage('https://cdn.iconscout.com/icon/free/png-256/free-github-logo-icon-download-in-svg-png-gif-file-formats--wordmark-programming-language-logos-pack-icons-1174970.png'), null, 0, -1, 0), // Left face with image
+              _buildFace(null, Colors.yellow, 0, 1, 0), // Right face with color
+              _buildFace(NetworkImage('https://w7.pngwing.com/pngs/512/824/png-transparent-visual-studio-code-hd-logo-thumbnail.png'), null, 0, 0, -1), // Top face with image
+              _buildFace(null, Colors.orange, 0, 0, 1), // Bottom face with color
+            ],
           ),
         );
       },
     );
   }
-}
-
-class LoadingAnimation extends StatefulWidget {
-  @override
-  _LoadingAnimationState createState() => _LoadingAnimationState();
-}
-
-class _LoadingAnimationState extends State<LoadingAnimation> with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _animationController = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(100, 100), // Adjust the size as needed
-      painter: CarWheelPainter(dotAnimation: _animationController),
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: _buildCube(),
+      ),
     );
   }
 }
 
-class CarWheelPainter extends CustomPainter {
-  final Animation<double> dotAnimation;
-
-  CarWheelPainter({required this.dotAnimation}) : super(repaint: dotAnimation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final Paint paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-
-    final double radius = size.width / 2;
-
-    // Draw the wheel outer circle
-    paint
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 6;
-
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), radius, paint);
-
-    // Draw wheel spokes
-    paint
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2;
-
-    final int numberOfSpokes = 6;
-    for (int i = 0; i < numberOfSpokes; i++) {
-      double angle = (i / numberOfSpokes) * 2 * pi;
-      double x = (size.width / 2) + radius * cos(angle);
-      double y = (size.height / 2) + radius * sin(angle);
-      canvas.drawLine(Offset(size.width / 2, size.height / 2), Offset(x, y), paint);
-    }
-
-    // Draw wheel hub
-    final Paint hubPaint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(size.width / 2, size.height / 2), 10, hubPaint);
-
-    // Draw moving circle
-    final Paint circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.7)
-      ..style = PaintingStyle.fill;
-
-    final double moveRadius = radius - 10; // Distance from center to move circle
-    final double angle = dotAnimation.value * 2 * pi; // Full rotation
-    final double circleX = (size.width / 2) + moveRadius * cos(angle);
-    final double circleY = (size.height / 2) + moveRadius * sin(angle);
-
-    canvas.drawCircle(Offset(circleX, circleY), 8, circlePaint);
-  }
-
-  @override
-  bool shouldRepaint(CarWheelPainter oldDelegate) => true;
-}
-
-class HomeScreen extends StatelessWidget {
+class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Home Screen')),
+      appBar: AppBar(
+        title: Text('Home Page'),
+      ),
       body: Center(
-        child: Text('Welcome to the Home Screen!'),
+        child: Text('Welcome to the Home Page!'),
       ),
     );
   }
