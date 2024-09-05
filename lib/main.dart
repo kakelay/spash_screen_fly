@@ -21,14 +21,14 @@ class MyApp extends StatelessWidget {
 class SplashScreenPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds: 3), () {
+    Future.delayed(Duration(seconds:2 ), () {
       Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
     });
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Colors.white,
       body: Center(
-        child: Lottie.asset('assets/youtube.json'), // Ensure this path matches your asset location
+        child: Lottie.asset('assets/line.json'), // Ensure this path matches your asset location
       ),
     );
   }
