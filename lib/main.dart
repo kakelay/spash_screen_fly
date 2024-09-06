@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:jumping_screen/home/home.dart';
 import 'package:lottie/lottie.dart';
 
 void main() {
@@ -9,7 +10,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      title: 'dsfhkdshf',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
@@ -21,29 +23,20 @@ class MyApp extends StatelessWidget {
 class SplashScreenPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    Future.delayed(Duration(seconds:2 ), () {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
+    Future.delayed(Duration(seconds: 4), () {
+      Navigator.of(context)
+          .pushReplacement(MaterialPageRoute(builder: (context) => HomePage()));
     });
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.black,
       body: Center(
-        child: Lottie.asset('assets/line.json'), // Ensure this path matches your asset location
+        child: Center(
+          child: Lottie.asset(
+              'assets/youtube.json'), // Ensure this path matches your asset location
+        ),
       ),
     );
   }
 }
 
-class HomePage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Home Page'),
-      ),
-      body: Center(
-        child: Text('Welcome to the Home Page!'),
-      ),
-    );
-  }
-}
